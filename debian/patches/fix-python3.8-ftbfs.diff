@@ -1,0 +1,36 @@
+commit 4dbfaae4379eda8b3b7debd37b338e8d384e2a77
+Author: Andreas Hasenack <andreas@canonical.com>
+Date:   Wed Jan 29 09:43:47 2020 -0300
+
+    Fix another build failure with python 3.8
+    
+    The parsing of python3-config --ldflags would break if multiple -L
+    path components were present. This change loops over these paths
+    until it finds the correct one.
+    
+    Fixes https://pagure.io/SSSD/sssd/issue/4147
+    
+    Reviewed-by: Pavel Březina <pbrezina@redhat.com>
+
+diff --git a/src/external/python.m4 b/src/external/python.m4
+index c20054417..1738f9f8f 100644
+--- a/src/external/python.m4
++++ b/src/external/python.m4
+@@ -36,10 +36,13 @@ path. If you want to build sssd without $1 bindings then specify
+     if test $? -eq 0; then
+         PYTHON_DLOPEN_LIB="` $PYTHON_CONFIG --libs --embed | grep -o -- '-lpython@<:@^ @:>@*' |sed -e 's/^-l/lib/'`"
+         if test x"$PYTHON_DLOPEN_LIB" != x; then
+-            python_lib_path="` $PYTHON_CONFIG --ldflags | grep -o -- '-L/@<:@^ @:>@*' | sed -e 's/^-L//'`"
+-            if test x"$python_lib_path" != x; then
+-                PYTHON_DLOPEN_LIB=$python_lib_path"/"$PYTHON_DLOPEN_LIB
+-            fi
++            python_lib_paths="` $PYTHON_CONFIG --ldflags | grep -o -- '-L/@<:@^ @:>@*' | sed -e 's/^-L//'`"
++            for p in $python_lib_paths; do
++                if test -e $p"/"$PYTHON_DLOPEN_LIB; then
++                    PYTHON_DLOPEN_LIB=$p"/"$PYTHON_DLOPEN_LIB
++                    break
++                fi
++            done
+             PYTHON_DLOPEN_LIB=$PYTHON_DLOPEN_LIB".so"
+             AC_DEFINE_UNQUOTED([PYTHON_DLOPEN_LIB], ["$PYTHON_DLOPEN_LIB"], [The path of libpython for dlopen-tests])
+         fi

@@ -1,0 +1,4 @@
+#git=https://github.com/SSSD/sssd
+version=3
+opts="uversionmangle=s/alpha/~alpha/;s/beta/~beta/,pgpsigurlmangle=s/$/.asc/" \
+https://releases.pagure.org/SSSD/sssd/sssd-(.*)\.tar\.gz

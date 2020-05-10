@@ -1,0 +1,36 @@
+Description: fix busy loop caused by watchdog SIGTERM not processed
+Origin: https://pagure.io/SSSD/sssd/c/2c13d8b
+Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=946847
+Bug: https://pagure.io/SSSD/sssd/issue/4132
+Bug: https://pagure.io/SSSD/sssd/issue/4089
+Forwarded: not-needed
+Author: Alexey Tikhonov
+Reviewed-by: Sumit Bose <sbose@redhat.com>
+Reviewed-by: mirabilos <tg@debian.org>
+Applied-Upstream: 2.2.4, commit:2c13d8b
+Applied-Upstream: 1.16.5, commit:0c62066
+
+--- a/src/util/util_watchdog.c
++++ b/src/util/util_watchdog.c
+@@ -54,9 +54,8 @@ static void watchdog_detect_timeshift(vo
+         if (write(watchdog_ctx.pipefd[1], "1", 1) != 1) {
+             if (getpid() == getpgrp()) {
+                 kill(-getpgrp(), SIGTERM);
+-            } else {
+-                _exit(1);
+             }
++            _exit(1);
+         }
+     }
+ }
+@@ -75,9 +74,8 @@ static void watchdog_handler(int sig)
+     if (__sync_add_and_fetch(&watchdog_ctx.ticks, 1) > WATCHDOG_MAX_TICKS) {
+         if (getpid() == getpgrp()) {
+             kill(-getpgrp(), SIGTERM);
+-        } else {
+-            _exit(1);
+         }
++        _exit(1);
+     }
+ }
+ 
